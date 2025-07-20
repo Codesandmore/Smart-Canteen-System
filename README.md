@@ -82,9 +82,6 @@ For development with automatic restart on file changes:
 npm run dev
 
 Step 6: Access the application in your web browser:
-- Main login page: http://localhost:3000
-- Student portal: http://localhost:3000/student.html  
-- Admin dashboard: http://localhost:3000/owner.html
 
 Database Management:
 - Initialize fresh database: npm run init-db
