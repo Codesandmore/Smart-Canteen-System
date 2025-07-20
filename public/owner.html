@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Canteen - Owner Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1>📊 Canteen Management Dashboard</h1>
+                <p>Monitor orders, track payments, and predict demand</p>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <div class="container">
+            <div class="nav-content">
+                <ul class="nav-links">
+                    <li><a href="#dashboard" class="active">Dashboard</a></li>
+                    <li><a href="#orders">Orders</a></li>
+                    <li><a href="#payments">Payments</a></li>
+                    <li><a href="#analytics">Analytics</a></li>
+                    <li><a href="#menu">Menu</a></li>
+                    <li><a href="#inventory">Inventory</a></li>
+                </ul>
+                <div class="user-info">
+                    <span id="ownerName">Canteen Owner</span>
+                    <span id="sessionInfo" style="font-size: 0.8rem; margin-right: 10px; color: #ff6b35;"></span>
+                    <button class="btn btn-danger" onclick="secureLogout()">Secure Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div id="message" class="message hidden"></div>
+        
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="todayOrders">0</div>
+                    <div class="stat-label">Today's Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="todayRevenue">₹0</div>
+                    <div class="stat-label">Today's Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingOrders">0</div>
+                    <div class="stat-label">Pending Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRevenue">₹0</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📋 Recent Orders</h2>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success" onclick="refreshOrders()">Refresh</button>
+                        <select id="quickStatusFilter" onchange="quickFilterOrders()">
+                            <option value="all">All Orders</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Preparing">Preparing</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="recentOrdersTable"></div>
+            </div>
+        </section>
+
+        <!-- Orders Section -->
+        <section id="orders" class="section hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📦 Order Management</h2>
+                    <div class="d-flex gap-2">
+                        <select id="orderStatusFilter" onchange="filterOrders()">
+                            <option value="all">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Preparing">Preparing</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <input type="date" id="orderDateFilter" onchange="filterOrders()">
+                        <button class="btn btn-info" onclick="exportOrders()">Export</button>
+                    </div>
+                </div>
+                <div id="ordersTable"></div>
+            </div>
+        </section>
+
+        <!-- Payments Section -->
+        <section id="payments" class="section hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2>💳 Payment Management</h2>
+                    <div class="d-flex gap-2">
+                        <select id="paymentStatusFilter" onchange="filterPayments()">
+                            <option value="all">All Payments</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Pending">Pending</option>
+                        </select>
+                        <button class="btn btn-warning" onclick="showPendingPayments()">Pending Cash Payments</button>
+                    </div>
+                </div>
+                <div id="paymentsTable"></div>
+            </div>
+
+            <!-- Pending Cash Payments -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>💵 Pending Cash Payments</h2>
+                </div>
+                <div id="pendingCashPayments"></div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics" class="section hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📈 Analytics & Insights</h2>
+                    <select id="analyticsTimeframe" onchange="updateAnalytics()">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </div>
+                
+                <!-- Demand Predictions -->
+                <div class="chart-container">
+                    <h3>🔮 Demand Predictions</h3>
+                    <div id="predictionsGrid" class="prediction-grid"></div>
+                </div>
+                
+                <!-- Top Selling Items -->
+                <div class="chart-container">
+                    <h3>🥇 Top Selling Items</h3>
+                    <div id="topItemsChart"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Menu Section -->
+        <section id="menu" class="section hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🍽️ Menu Management</h2>
+                    <button class="btn btn-success" onclick="showAddMenuForm()">Add New Item</button>
+                </div>
+                <div id="menuGrid"></div>
+            </div>
+        </section>
+
+        <!-- Inventory Section -->
+        <section id="inventory" class="section hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📦 Daily Inventory Management</h2>
+                    <div class="inventory-controls">
+                        <span id="inventoryDate">Today: Loading...</span>
+                        <button class="btn btn-info" onclick="refreshInventory()">Refresh</button>
+                    </div>
+                </div>
+                <div class="inventory-section">
+                    <div class="inventory-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalItems">0</div>
+                            <div class="stat-label">Total Items</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="availableItems">0</div>
+                            <div class="stat-label">Available Items</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="outOfStockItems">0</div>
+                            <div class="stat-label">Out of Stock</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalRemaining">0</div>
+                            <div class="stat-label">Total Remaining</div>
+                        </div>
+                    </div>
+                    <div id="inventoryGrid" class="inventory-grid"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Order Details Modal -->
+    <div id="orderModal" class="modal hidden">
+        <div class="modal-content card">
+            <div class="card-header">
+                <h2>Order Details</h2>
+                <button class="btn btn-danger" onclick="hideOrderModal()">×</button>
+            </div>
+            <div id="orderDetails"></div>
+        </div>
+    </div>
+
+    <!-- Cash Payment Modal -->
+    <div id="cashPaymentModal" class="modal hidden">
+        <div class="modal-content card">
+            <div class="card-header">
+                <h2>Record Cash Payment</h2>
+                <button class="btn btn-danger" onclick="hideCashPaymentModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label for="cashAmount">Amount Received</label>
+                <input type="number" id="cashAmount" placeholder="Enter amount" readonly>
+                <button class="btn btn-success mt-2" onclick="recordCashPayment()">Record Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/owner.js"></script>
+</body>
+</html>

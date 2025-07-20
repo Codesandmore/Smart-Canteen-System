@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Canteen - Student Portal</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1>🍽️ Smart Canteen</h1>
+                <p>Order your favorite meals with ease</p>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <div class="container">
+            <div class="nav-content">
+                <ul class="nav-links">
+                    <li><a href="#menu" class="active">Menu</a></li>
+                    <li><a href="#orders">My Orders</a></li>
+                    <li><a href="#wallet">Wallet</a></li>
+                </ul>
+                <div class="user-info">
+                    <div class="balance-display">
+                        Balance: ₹<span id="userBalance">0</span>
+                    </div>
+                    <span id="userName">Student</span>
+                    <button class="btn btn-danger" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div id="message" class="message hidden"></div>
+        
+        <!-- Student Info Section -->
+        <section id="studentInfo" class="card">
+            <div class="card-header">
+                <h2>Student Information</h2>
+                <button class="btn btn-info" onclick="showSection('wallet')">Add Money</button>
+            </div>
+            <div class="form-group">
+                <label for="studentName">Name</label>
+                <input type="text" id="studentName" readonly>
+            </div>
+            <div class="form-group">
+                <label for="studentId">Student ID</label>
+                <input type="text" id="studentId" readonly>
+            </div>
+        </section>
+
+        <!-- Menu Section -->
+        <section id="menu" class="section">
+            <div class="menu-container">
+                <div class="menu-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Today's Menu</h2>
+                            <div class="d-flex gap-2">
+                                <select id="categoryFilter" onchange="filterMenu()">
+                                    <option value="all">All Categories</option>
+                                    <option value="Main Course">Main Course</option>
+                                    <option value="Snacks">Snacks</option>
+                                    <option value="Beverages">Beverages</option>
+                                    <option value="Desserts">Desserts</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="menuGrid" class="menu-grid"></div>
+                    </div>
+                </div>
+                
+                <!-- Cart Section -->
+                <div class="cart-sidebar">
+                    <section id="cart" class="cart-section">
+                        <h3>🛒 Your Order</h3>
+                        <div id="cartItems"></div>
+                        <div class="cart-total">
+                            <div class="total-amount">Total: ₹<span id="totalAmount">0</span></div>
+                            <div class="d-flex gap-2 justify-between">
+                                <button class="btn btn-warning" onclick="clearCart()">Clear Cart</button>
+                                <button class="btn btn-success" onclick="showCheckout()" disabled id="checkoutBtn">Checkout</button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </section>
+
+        <!-- Orders Section -->
+        <section id="orders" class="section hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2>My Orders</h2>
+                    <select id="orderStatusFilter" onchange="filterOrders()">
+                        <option value="all">All Orders</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Preparing">Preparing</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <div id="ordersContainer"></div>
+            </div>
+        </section>
+
+        <!-- Wallet Section -->
+        <section id="wallet" class="section hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h2>💳 Wallet Management</h2>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="currentBalance">₹0</div>
+                        <div class="stat-label">Current Balance</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalSpent">₹0</div>
+                        <div class="stat-label">Total Spent</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pendingPayments">0</div>
+                        <div class="stat-label">Pending Payments</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="addAmount">Add Money to Wallet</label>
+                    <input type="number" id="addAmount" placeholder="Enter amount" min="1" max="10000">
+                    <button class="btn btn-success mt-2" onclick="addMoney()">Add Money</button>
+                </div>
+                
+                <!-- Change Password Section -->
+                <div class="card mt-3" style="border: 1px solid var(--border-color);">
+                    <div class="card-header">
+                        <h3>🔒 Change Password</h3>
+                    </div>
+                    <form id="changePasswordForm">
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" required placeholder="Enter current password">
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" required placeholder="Enter new password" minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmNewPassword">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" required placeholder="Confirm new password" minlength="6">
+                        </div>
+                        <button type="submit" class="btn btn-warning" style="width: 100%;">Change Password</button>
+                    </form>
+                </div>
+                
+                <div id="transactionHistory">
+                    <h3>Recent Transactions</h3>
+                    <div id="transactionsList"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal hidden">
+        <div class="modal-content card">
+            <div class="card-header">
+                <h2>Complete Your Order</h2>
+                <button class="btn btn-danger" onclick="hideCheckout()">×</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Payment Method</label>
+                <div class="payment-methods">
+                    <div class="payment-method" data-method="wallet">
+                        <h4>💳 Wallet</h4>
+                        <p>Balance: ₹<span id="walletBalance">0</span></p>
+                    </div>
+                    <div class="payment-method" data-method="cash">
+                        <h4>💵 Cash</h4>
+                        <p>Pay at counter</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cart-total">
+                <div class="total-amount">Total: ₹<span id="checkoutTotal">0</span></div>
+                <div class="d-flex gap-2 justify-between">
+                    <button class="btn btn-warning" onclick="hideCheckout()">Cancel</button>
+                    <button class="btn btn-success" onclick="placeOrder()" id="placeOrderBtn" disabled>Place Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/student.js"></script>
+</body>
+</html>

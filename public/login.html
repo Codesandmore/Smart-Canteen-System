@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Canteen System - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card fade-in">
+            <div class="login-header">
+                <h1>🍽️ Smart Canteen</h1>
+                <p id="formTitle">Welcome back! Please sign in to your account.</p>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm">
+                <!-- Role Selection -->
+                <div class="form-group">
+                    <label for="userRole">Login as:</label>
+                    <select id="userRole" name="userRole" onchange="toggleLoginMode()" required>
+                        <option value="student">Student</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required placeholder="Enter your username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                </div>
+
+                <!-- Admin-only security fields (hidden by default) -->
+                <div id="adminSecurity" class="hidden">
+                    <div class="form-group">
+                        <label for="securityCode">Security Code</label>
+                        <input type="password" id="securityCode" name="securityCode" 
+                               placeholder="Enter admin security code">
+                        <small style="color: #666;">Contact system administrator for security code</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accessReason">Access Reason</label>
+                        <select id="accessReason" name="accessReason">
+                            <option value="">Select reason for access</option>
+                            <option value="daily_operations">Daily Operations</option>
+                            <option value="inventory_management">Inventory Management</option>
+                            <option value="financial_review">Financial Review</option>
+                            <option value="system_maintenance">System Maintenance</option>
+                            <option value="user_management">User Management</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">
+                    <span class="btn-text">Sign In</span>
+                    <div class="loading hidden"></div>
+                </button>
+            </form>
+            
+            <!-- Student Registration Form -->
+            <form id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label for="regAccountNumber">Student Account Number</label>
+                    <input type="text" id="regAccountNumber" name="accountNumber" required 
+                           placeholder="Enter your student account number (e.g., ST2025XXX)"
+                           pattern="^ST[0-9]{7}$" title="Format: ST followed by 7 digits">
+                </div>
+                
+                <div class="form-group">
+                    <label for="regPassword">Password</label>
+                    <input type="password" id="regPassword" name="password" required 
+                           placeholder="Create a password (min 6 characters)" minlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required 
+                           placeholder="Confirm your password" minlength="6">
+                </div>
+                
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">
+                    <span class="btn-text">Create Student Account</span>
+                    <div class="loading hidden"></div>
+                </button>
+            </form>
+            
+            <div id="message" class="message hidden"></div>
+            
+            <!-- Toggle between Login and Register -->
+            <div style="margin-top: 1.5rem; text-align: center;">
+                <button type="button" id="toggleForm" class="btn btn-info" style="width: 100%;">
+                    New Student? Create Account
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Admin security code (in production, this should be more secure)
+        const ADMIN_SECURITY_CODE = 'CANTEEN2025ADMIN';
+        let failedAdminAttempts = 0;
+        const MAX_ADMIN_ATTEMPTS = 3;
+
+        // Toggle admin security fields
+        function toggleLoginMode() {
+            const userRole = document.getElementById('userRole').value;
+            const adminSecurity = document.getElementById('adminSecurity');
+            const formTitle = document.getElementById('formTitle');
+            
+            if (userRole === 'admin') {
+                adminSecurity.classList.remove('hidden');
+                formTitle.textContent = 'Administrator Access - Enhanced Security Required';
+                document.getElementById('securityCode').required = true;
+                document.getElementById('accessReason').required = true;
+            } else {
+                adminSecurity.classList.add('hidden');
+                formTitle.textContent = 'Welcome back! Please sign in to your account.';
+                document.getElementById('securityCode').required = false;
+                document.getElementById('accessReason').required = false;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const messageDiv = document.getElementById('message');
+            const toggleBtn = document.getElementById('toggleForm');
+            const formTitle = document.getElementById('formTitle');
+            let isLoginMode = true;
+
+            // Toggle between login and register forms
+            toggleBtn.addEventListener('click', function() {
+                isLoginMode = !isLoginMode;
+                
+                if (isLoginMode) {
+                    loginForm.classList.remove('hidden');
+                    registerForm.classList.add('hidden');
+                    toggleBtn.textContent = 'New Student? Create Account';
+                    formTitle.textContent = 'Welcome back! Please sign in to your account.';
+                } else {
+                    loginForm.classList.add('hidden');
+                    registerForm.classList.remove('hidden');
+                    toggleBtn.textContent = 'Already have an account? Sign In';
+                    formTitle.textContent = 'Create your student account to start ordering!';
+                }
+                
+                messageDiv.classList.add('hidden');
+            });
+
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(loginForm);
+                const userRole = formData.get('userRole');
+                const username = formData.get('username');
+                const password = formData.get('password');
+                
+                // Admin security validation
+                if (userRole === 'admin') {
+                    const securityCode = formData.get('securityCode');
+                    const accessReason = formData.get('accessReason');
+                    
+                    // Check security code
+                    if (securityCode !== ADMIN_SECURITY_CODE) {
+                        failedAdminAttempts++;
+                        showMessage(`Invalid security code. Attempt ${failedAdminAttempts}/${MAX_ADMIN_ATTEMPTS}`, 'error');
+                        
+                        if (failedAdminAttempts >= MAX_ADMIN_ATTEMPTS) {
+                            showMessage('Too many failed attempts. Admin access temporarily locked. Contact system administrator.', 'error');
+                            document.getElementById('loginForm').style.pointerEvents = 'none';
+                            setTimeout(() => {
+                                document.getElementById('loginForm').style.pointerEvents = 'auto';
+                                failedAdminAttempts = 0;
+                            }, 300000); // 5 minutes lockout
+                        }
+                        return;
+                    }
+                    
+                    // Check access reason
+                    if (!accessReason) {
+                        showMessage('Please select a reason for admin access', 'error');
+                        return;
+                    }
+                    
+                    // Log admin access attempt
+                    console.log(`Admin access attempt: ${username} - Reason: ${accessReason} - Time: ${new Date().toISOString()}`);
+                }
+
+                const loginData = {
+                    username: username,
+                    password: password,
+                    role: userRole,
+                    securityCode: userRole === 'admin' ? formData.get('securityCode') : undefined,
+                    accessReason: userRole === 'admin' ? formData.get('accessReason') : undefined
+                };
+
+                // Show loading state
+                const btnText = document.querySelector('.btn-text');
+                const loading = document.querySelector('.loading');
+                btnText.classList.add('hidden');
+                loading.classList.remove('hidden');
+
+                try {
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(loginData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Additional admin verification
+                        if (userRole === 'admin' && result.user.role !== 'owner') {
+                            showMessage('Access denied. Invalid admin credentials.', 'error');
+                            return;
+                        }
+                        
+                        // Store user data with additional security info for admin
+                        const userData = result.user;
+                        if (userRole === 'admin') {
+                            userData.accessReason = formData.get('accessReason');
+                            userData.loginTime = new Date().toISOString();
+                            userData.sessionTimeout = Date.now() + (30 * 60 * 1000); // 30 minutes for admin
+                        } else {
+                            userData.sessionTimeout = Date.now() + (8 * 60 * 60 * 1000); // 8 hours for students
+                        }
+                        
+                        localStorage.setItem('user', JSON.stringify(userData));
+                        
+                        // Reset failed attempts on successful login
+                        failedAdminAttempts = 0;
+                        
+                        // Redirect based on role
+                        if (result.user.role === 'owner') {
+                            window.location.href = '/owner';
+                        } else {
+                            window.location.href = '/student';
+                        }
+                    } else {
+                        showMessage(result.message || 'Login failed', 'error');
+                        if (userRole === 'admin') {
+                            failedAdminAttempts++;
+                        }
+                    }
+                } catch (error) {
+                    showMessage('Network error. Please try again.', 'error');
+                }
+
+                // Hide loading state
+                btnText.classList.remove('hidden');
+                loading.classList.add('hidden');
+            });
+
+            // Student Registration Form Handler
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(registerForm);
+                const password = formData.get('password');
+                const confirmPassword = formData.get('confirmPassword');
+                
+                // Validate passwords match
+                if (password !== confirmPassword) {
+                    showMessage('Passwords do not match', 'error');
+                    return;
+                }
+                
+                const registerData = {
+                    username: formData.get('accountNumber'),
+                    password: password
+                };
+
+                // Show loading state
+                const btnText = registerForm.querySelector('.btn-text');
+                const loading = registerForm.querySelector('.loading');
+                btnText.classList.add('hidden');
+                loading.classList.remove('hidden');
+
+                try {
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(registerData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showMessage('Account created successfully! You can now sign in.', 'success');
+                        
+                        // Switch back to login form after 2 seconds
+                        setTimeout(() => {
+                            toggleBtn.click();
+                            document.getElementById('username').value = registerData.username;
+                        }, 2000);
+                    } else {
+                        showMessage(result.message || 'Registration failed', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Network error. Please try again.', 'error');
+                }
+
+                // Hide loading state
+                btnText.classList.remove('hidden');
+                loading.classList.add('hidden');
+            });
+
+            function showMessage(text, type) {
+                messageDiv.textContent = text;
+                messageDiv.className = `message ${type}`;
+                messageDiv.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    messageDiv.classList.add('hidden');
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
